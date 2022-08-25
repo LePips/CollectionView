@@ -7,17 +7,19 @@ let package = Package(
     name: "CollectionView",
     platforms: [
         .iOS(.v13),
-        .tvOS(.v13)
+        .tvOS(.v13),
     ],
     products: [
         .library(
             name: "CollectionView",
-            targets: ["CollectionView"]),
+            targets: ["CollectionView"]
+        ),
     ],
     dependencies: [],
     targets: [
         .target(
             name: "CollectionView",
-            dependencies: [])
+            dependencies: []
+        ),
     ]
 )

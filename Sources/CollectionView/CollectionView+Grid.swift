@@ -3,14 +3,14 @@ import UIKit
 
 // MARK: Grid
 
-extension NSCollectionLayoutSection {
-    
-    public enum GridLayoutMode {
+public extension NSCollectionLayoutSection {
+
+    enum GridLayoutMode {
         case fixedNumberOfColumns(Int)
         case adaptive(withMinItemSize: CGFloat)
     }
-    
-    static public func grid(
+
+    static func grid(
         layoutEnvironment: NSCollectionLayoutEnvironment,
         layoutMode: GridLayoutMode = .fixedNumberOfColumns(2),
         itemSpacing: CGFloat = 5,
@@ -19,8 +19,7 @@ extension NSCollectionLayoutSection {
         sectionInsets: NSDirectionalEdgeInsets = .init(top: 0, leading: 20, bottom: 0, trailing: 20)
     ) -> NSCollectionLayoutSection {
         let count: Int = {
-            switch layoutMode
-            {
+            switch layoutMode {
             case let .fixedNumberOfColumns(count):
                 return count
             case let .adaptive(minItemSize):
@@ -33,7 +32,7 @@ extension NSCollectionLayoutSection {
         let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: itemSize)
         let item = NSCollectionLayoutItem(layoutSize: itemLayoutSize)
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitem: item, count: count)
-        
+
         group.interItemSpacing = .fixed(itemSpacing)
 
         let section = NSCollectionLayoutSection(group: group)
@@ -41,11 +40,11 @@ extension NSCollectionLayoutSection {
         section.contentInsets = sectionInsets
         // If this isn't defined, there is a bug in UICVCompositional Layout that will fail to update sizes of cells
         section.visibleItemsInvalidationHandler = { _, _, _ in }
-        
+
         return section
     }
-    
-    public static func orthogonalGrid(
+
+    static func orthogonalGrid(
         gridSize: Int = 2,
         itemDimension: NSCollectionLayoutDimension = .fractionalWidth(0.9),
         sectionDimension: NSCollectionLayoutDimension = .fractionalHeight(0.8),
@@ -58,7 +57,7 @@ extension NSCollectionLayoutSection {
         let groupSize = NSCollectionLayoutSize(widthDimension: itemDimension, heightDimension: sectionDimension)
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitem: item, count: gridSize)
-        
+
         group.interItemSpacing = .fixed(gridSpacing)
         group.contentInsets = itemInsets
 
@@ -67,7 +66,7 @@ extension NSCollectionLayoutSection {
         section.contentInsets = sectionInsets
         // If this isn't defined, there is a bug in UICVCompositional Layout that will fail to update sizes of cells
         section.visibleItemsInvalidationHandler = { _, _, _ in }
-        
+
         return section
     }
 }
