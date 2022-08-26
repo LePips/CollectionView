@@ -3,30 +3,27 @@ import SwiftUI
 public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIViewRepresentable {
 
     private var rows: [CollectionSection<Section, Item>]
-    private var animateChanges: Bool
     private var onEdgeReached: (Edge) -> Void
     private var willReachEdge: (Edge) -> Void
     private var willReachEdgeInsets: EdgeInsets
-    private var configuration: (CollectionViewConfiguration) -> Void
+    private var configure: (CollectionViewConfiguration) -> Void
     private var sectionLayout: (Int, NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection
     private var cell: (IndexPath, Item, CollectionViewProxy) -> Cell
 
     private init(
         rows: [CollectionSection<Section, Item>],
-        animateChanges: Bool,
         onEdgeReached: @escaping (Edge) -> Void,
         willReachEdge: @escaping (Edge) -> Void,
         willReachEdgeInsets: EdgeInsets,
-        configuration: @escaping (CollectionViewConfiguration) -> Void,
+        configure: @escaping (CollectionViewConfiguration) -> Void,
         sectionLayout: @escaping (Int, NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection,
         @ViewBuilder cell: @escaping (IndexPath, Item, CollectionViewProxy) -> Cell
     ) {
         self.rows = rows
-        self.animateChanges = animateChanges
         self.onEdgeReached = onEdgeReached
         self.willReachEdge = willReachEdge
         self.willReachEdgeInsets = willReachEdgeInsets
-        self.configuration = configuration
+        self.configure = configure
         self.sectionLayout = sectionLayout
         self.cell = cell
     }
@@ -39,9 +36,8 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
         collectionView.register(CollectionViewCell<Cell>.self, forCellWithReuseIdentifier: cellIdentifier)
         collectionView.backgroundColor = nil
 
-        let configuration = CollectionViewConfiguration(collectionView: collectionView)
-        self.configuration(configuration)
-        configuration.setCollectionView()
+        configure(context.coordinator.configuration)
+        context.coordinator.configuration.configure(collectionView)
 
         let proxy = CollectionViewProxy(collectionView: collectionView)
         let dataSource = Coordinator.DataSource(collectionView: collectionView) { collectionView, indexPath, item in
@@ -60,7 +56,7 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
     }
 
     public func updateUIView(_ uiView: UICollectionView, context: Context) {
-        reloadData(in: uiView, context: context, animated: animateChanges)
+        reloadData(in: uiView, context: context)
     }
 
     public func makeCoordinator() -> Coordinator {
@@ -85,14 +81,14 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
         return snapshot
     }
 
-    private func reloadData(in collectionView: UICollectionView, context: Context, animated: Bool = false) {
+    private func reloadData(in collectionView: UICollectionView, context: Context) {
         let coordinator = context.coordinator
         coordinator.sectionLayout = self.sectionLayout
 
         guard let dataSource = coordinator.dataSource else { return }
 
         if coordinator.rowsHash != rows.hashValue {
-            dataSource.apply(snapshot(), animatingDifferences: animated) {
+            dataSource.apply(snapshot(), animatingDifferences: coordinator.configuration.animateChanges) {
                 collectionView.setNeedsFocusUpdate()
                 collectionView.updateFocusIfNeeded()
             }
@@ -108,6 +104,7 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
         var dataSource: DataSource?
         var sectionLayout: ((Int, NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection)?
         var rowsHash: Int?
+        var configuration: CollectionViewConfiguration = .init()
         var parent: CollectionView!
 
         private var onEdgeReachedStore: Set<Edge> = []
@@ -177,11 +174,10 @@ public extension CollectionView {
     ) {
         self.init(
             rows: rows,
-            animateChanges: false,
             onEdgeReached: { _ in },
             willReachEdge: { _ in },
             willReachEdgeInsets: .zero,
-            configuration: { _ in },
+            configure: { _ in },
             sectionLayout: { _, layoutEnvironment in .grid(layoutEnvironment: layoutEnvironment) },
             cell: cell
         )
@@ -206,12 +202,6 @@ public extension CollectionView {
         return copy
     }
 
-    func animateChanges(_ animateChanges: Bool = true) -> Self {
-        var copy = self
-        copy.animateChanges = animateChanges
-        return copy
-    }
-
     func onEdgeReached(_ onEdgeReached: @escaping (Edge) -> Void) -> Self {
         var copy = self
         copy.onEdgeReached = onEdgeReached
@@ -225,9 +215,9 @@ public extension CollectionView {
         return copy
     }
 
-    func configuration(_ configuration: @escaping (CollectionViewConfiguration) -> Void) -> Self {
+    func configure(_ configure: @escaping (CollectionViewConfiguration) -> Void) -> Self {
         var copy = self
-        copy.configuration = configuration
+        copy.configure = configure
         return copy
     }
 }
