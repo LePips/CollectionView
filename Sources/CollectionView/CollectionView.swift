@@ -2,6 +2,9 @@ import SwiftUI
 
 public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIViewRepresentable {
 
+    @Binding
+    private var scrollViewOffset: CGPoint
+    
     private var rows: [CollectionSection<Section, Item>]
     private var onEdgeReached: (Edge) -> Void
     private var willReachEdge: (Edge) -> Void
@@ -11,6 +14,7 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
     private var cell: (IndexPath, Item, CollectionViewProxy) -> Cell
 
     private init(
+        scrollViewOffset: Binding<CGPoint>,
         rows: [CollectionSection<Section, Item>],
         onEdgeReached: @escaping (Edge) -> Void,
         willReachEdge: @escaping (Edge) -> Void,
@@ -19,6 +23,8 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
         sectionLayout: @escaping (Int, NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection,
         @ViewBuilder cell: @escaping (IndexPath, Item, CollectionViewProxy) -> Cell
     ) {
+        self._scrollViewOffset = scrollViewOffset
+        
         self.rows = rows
         self.onEdgeReached = onEdgeReached
         self.willReachEdge = willReachEdge
@@ -116,6 +122,8 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
 
         public func scrollViewDidScroll(_ scrollView: UIScrollView) {
             guard scrollView.frame.width > 0, scrollView.frame.height > 0 else { return }
+            
+            parent.scrollViewOffset = scrollView.contentOffset
 
             let scrollableHorizontally = scrollView.contentSizePlusInsets.width > scrollView.frame.size.width
             let scrollableVertically = scrollView.contentSizePlusInsets.height > scrollView.frame.size.height
@@ -182,6 +190,7 @@ public extension CollectionView {
         @ViewBuilder cell: @escaping (IndexPath, Item, CollectionViewProxy) -> Cell
     ) {
         self.init(
+            scrollViewOffset: Binding(get: { .zero }, set: { _ in  }),
             rows: rows,
             onEdgeReached: { _ in },
             willReachEdge: { _ in },
@@ -227,6 +236,12 @@ public extension CollectionView {
     func configure(_ configure: @escaping (CollectionViewConfiguration) -> Void) -> Self {
         var copy = self
         copy.configure = configure
+        return copy
+    }
+    
+    func scrollViewOffset(_ scrollViewOffset: Binding<CGPoint>) -> Self {
+        var copy = self
+        copy._scrollViewOffset = scrollViewOffset
         return copy
     }
 }
