@@ -115,6 +115,8 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
         }
 
         public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            guard scrollView.frame.width > 0, scrollView.frame.height > 0 else { return }
+
             let scrollableHorizontally = scrollView.contentSizePlusInsets.width > scrollView.frame.size.width
             let scrollableVertically = scrollView.contentSizePlusInsets.height > scrollView.frame.size.height
 
@@ -125,22 +127,29 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
                 switch edge {
                 case .top:
                     hasReachedEdge = scrollableVertically && scrollView.contentOffset.y <= -scrollView.adjustedContentInset.top
-                    willReachEdge = scrollableVertically && scrollView.contentOffset.y <= -scrollView.adjustedContentInset.top + parent
-                        .willReachEdgeInsets.top
+                    willReachEdge = scrollableVertically
+                        && parent.willReachEdgeInsets.top > 0
+                        && scrollView.contentOffset.y <= -scrollView.adjustedContentInset.top + parent.willReachEdgeInsets.top
                 case .bottom:
                     hasReachedEdge = scrollableVertically && scrollView.contentOffset.y >= scrollView.contentSize.height - scrollView.frame
                         .height + scrollView.adjustedContentInset.bottom
-                    willReachEdge = scrollableVertically && scrollView.contentOffset.y >= scrollView.contentSize.height - scrollView.frame
-                        .height + scrollView.adjustedContentInset.bottom - parent.willReachEdgeInsets.bottom
+                    willReachEdge = scrollableVertically
+                        && parent.willReachEdgeInsets.bottom > 0
+                        && scrollView.contentOffset.y >= scrollView.contentSize.height - scrollView.frame.height + scrollView
+                        .adjustedContentInset.bottom - parent.willReachEdgeInsets.bottom
                 case .leading:
                     hasReachedEdge = scrollableHorizontally && scrollView.contentOffset.x <= -scrollView.adjustedContentInset.left
-                    willReachEdge = scrollableHorizontally && scrollView.contentOffset.x <= -scrollView.adjustedContentInset.left + parent
-                        .willReachEdgeInsets.leading
+                    willReachEdge = scrollableHorizontally
+                        && parent.willReachEdgeInsets.leading > 0
+                        && scrollView.contentOffset.x <= -scrollView.adjustedContentInset.left + parent.willReachEdgeInsets.leading
                 case .trailing:
                     hasReachedEdge = scrollableHorizontally && scrollView.contentOffset.x >= scrollView.contentSize.width - scrollView.frame
                         .width + scrollView.adjustedContentInset.right
-                    willReachEdge = scrollableHorizontally && scrollView.contentOffset.x >= scrollView.contentSize.width - scrollView.frame
-                        .width + scrollView.adjustedContentInset.right - parent.willReachEdgeInsets.trailing
+                    willReachEdge = scrollableHorizontally
+                        && parent.willReachEdgeInsets.trailing > 0
+                        && scrollView.contentOffset.x >= scrollView.contentSize.width - scrollView.frame.width + scrollView
+                        .adjustedContentInset
+                        .right - parent.willReachEdgeInsets.trailing
                 }
 
                 if hasReachedEdge {
