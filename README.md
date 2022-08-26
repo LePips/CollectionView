@@ -1,12 +1,12 @@
 # CollectionView
 
-A basic wrapper for `UICollectionView` for overcoming `LazyVGrid/LazyHGrid` performance issues.
+A basic wrapper of `UICollectionView` to overcome `LazyVGrid/LazyHGrid` performance issues.
 
-Initially build from the article series [SwiftUICollection](https://github.com/defagos/SwiftUICollection) and influenced by [ASCollectionView](https://github.com/apptekstudios/ASCollectionView).
+Influenced by [SwiftUICollection](https://github.com/defagos/SwiftUICollection) and [ASCollectionView](https://github.com/apptekstudios/ASCollectionView).
 
 # Usage
 
-Currently, this is supposed to be a basic wrapper for displaying many items for performance improvements. Further enhancements may come.
+Currently, `CollectionView` just acts to display items for performance improvements. Further enhancements may be implemented in the future.
 
 <details>
 <summary>iOS Example</summary>
@@ -14,33 +14,44 @@ Currently, this is supposed to be a basic wrapper for displaying many items for 
 ```swift
 struct ContentView: View {
     
+    @State
+    var items = (0..<100).map { "\($0)" }
+    
     static let colors: [Color] = [.blue, .red, .green, .yellow, .purple, .cyan, .indigo, .mint, .orange]
     
-    @State
-    var items = (0..<4).map { "\($0)" }
-    
     var body: some View {
-        CollectionView(section: CollectionSection(section: 0, items: items)) { path, item in
+        CollectionView(items: items) { indexPath, item, proxy in
             Button {
-                items.append("\(items.count)")
+                if indexPath.row < 50 {
+                    proxy.scrollTo(.bottom)
+                } else {
+                    proxy.scrollTo(.top)
+                }
             } label: {
                 ZStack {
                     Self.colors.randomElement()
+                        .frame(height: 150)
+                        .cornerRadius(10)
                     
                     Text(item)
                 }
-                .frame(width: 90, height: 90)
             }
         }
-        .layout { _, environment in
-				.grid(layoutEnvironment: environment,
-					layoutMode: .fixedNumberOfColumns(4),
-					itemSpacing: 0,
-					lineSpacing: 0,
-					itemSize: .estimated(90))
+        .willReachEdge(insets: .init(top: 300, leading: 0, bottom: 300, trailing: 0)) { edge in
+            print("Will reach edge: \(edge)")
         }
-        .animateChanges()
-        .ignoresSafeArea(.all)
+        .onEdgeReached { edge in
+            print("Edge reached: \(edge)")
+        }
+        .layout { _, layoutEnvironment in
+                .grid(layoutEnvironment: layoutEnvironment,
+                      layoutMode: .adaptive(withMinItemSize: 100),
+                      sectionInsets: .zero)
+        }
+        .configure { configuration in
+            configuration.showsVerticalScrollIndicator = false
+        }
+        .ignoresSafeArea()
     }
 }
 ```
@@ -52,36 +63,43 @@ struct ContentView: View {
 ```swift
 struct ContentView: View {
     
+    @State
+    var items = (0..<15).map { "\($0)" }
+    
     static let colors: [Color] = [.blue, .red, .green, .yellow, .purple, .cyan, .indigo, .mint, .orange]
     
-    @State
-    var items = (0..<4).map { "\($0)" }
-    
     var body: some View {
-        CollectionView(section: CollectionSection(section: 0, items: items)) { path, item in
+        CollectionView(items: items) { _, item, _ in
             Button {
                 items.append("\(items.count)")
             } label: {
                 ZStack {
                     Self.colors.randomElement()
+                        .frame(width: 200, height: 200)
                     
                     Text(item)
                 }
-                .frame(width: 200, height: 200)
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(CardButtonStyle())
         }
-        .layout { _, environment in
-                .grid(layoutEnvironment: environment,
+        .willReachEdge(insets: .init(top: 300, leading: 0, bottom: 300, trailing: 0)) { edge in
+            print("Will reach edge: \(edge)")
+        }
+        .onEdgeReached { edge in
+            print("Edge reached: \(edge)")
+        }
+        .layout { _, layoutEnvironment in
+                .grid(layoutEnvironment: layoutEnvironment,
                       layoutMode: .adaptive(withMinItemSize: 200),
                       itemSpacing: 60,
                       lineSpacing: 40,
                       itemSize: .estimated(200))
         }
-        .animateChanges()
-        .ignoresSafeArea(.all)
+        .configure { configuration in
+            configuration.showsVerticalScrollIndicator = false
+        }
+        .ignoresSafeArea()
     }
 }
 ```
-
 </details>
