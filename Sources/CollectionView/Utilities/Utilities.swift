@@ -59,11 +59,4 @@ extension UIScrollView {
             height: contentSize.height + adjustedContentInset.bottom + adjustedContentInset.top
         )
     }
-
-    var maxContentOffset: CGPoint {
-        CGPoint(
-            x: max(0, contentSizePlusInsets.width - bounds.width),
-            y: max(-adjustedContentInset.top, contentSizePlusInsets.height - bounds.height)
-        )
-    }
 }

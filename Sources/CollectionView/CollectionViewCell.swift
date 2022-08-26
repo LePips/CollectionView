@@ -38,6 +38,7 @@ class CollectionViewCell<Cell: View>: UICollectionViewCell {
         if let hostView = hostingController?.view {
             hostView.frame = contentView.bounds
             hostView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            hostView.backgroundColor = nil
             contentView.addSubview(hostView)
         }
     }
