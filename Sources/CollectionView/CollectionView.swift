@@ -1,17 +1,17 @@
 import SwiftUI
 
 public class CollectionViewConfiguration {
-    
+
     var collectionView: UICollectionView
-    
+
     init(collectionView: UICollectionView) {
         self.collectionView = collectionView
     }
-    
+
     public var showsVerticalScrollIndicator: Bool = true
     public var showsHorizontalScrollIndicator: Bool = true
     public var keyboardDismissMode: UIScrollView.KeyboardDismissMode = .none
-    
+
     func setCollectionView() {
         collectionView.showsVerticalScrollIndicator = showsVerticalScrollIndicator
         collectionView.showsHorizontalScrollIndicator = showsHorizontalScrollIndicator
@@ -57,11 +57,11 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
         collectionView.delegate = context.coordinator
         collectionView.register(CollectionViewCell<Cell>.self, forCellWithReuseIdentifier: cellIdentifier)
         collectionView.backgroundColor = nil
-        
+
         let configuration = CollectionViewConfiguration(collectionView: collectionView)
         self.configuration(configuration)
         configuration.setCollectionView()
-        
+
         let proxy = CollectionViewProxy(collectionView: collectionView)
         let dataSource = Coordinator.DataSource(collectionView: collectionView) { collectionView, indexPath, item in
             let collectionViewCell = collectionView.dequeueReusableCell(
@@ -74,7 +74,7 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
         context.coordinator.dataSource = dataSource
 
         reloadData(in: collectionView, context: context)
-        
+
         return collectionView
     }
 
@@ -151,14 +151,14 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
                     case .bottom:
                         let bottomInset = scrollView.adjustedContentInset.bottom
                         let xOffset = scrollView.contentSize.height - scrollView.frame.height + bottomInset
-                        
+
                         return scrollableVertically && scrollView.contentOffset.y >= xOffset
                     case .left:
                         return scrollableHorizontally && scrollView.contentOffset.x <= -scrollView.adjustedContentInset.left
                     case .right:
                         let rightInset = scrollView.adjustedContentInset.right
                         let xOffset = scrollView.contentSize.width - scrollView.frame.width + rightInset
-                        
+
                         return scrollableHorizontally && scrollView.contentOffset.x >= xOffset
                     }
                 }()
@@ -233,7 +233,7 @@ public extension CollectionView {
 //        copy.willReachBoundary = willReachBoundary
 //        return copy
 //    }
-    
+
     func configuration(_ configuration: @escaping (CollectionViewConfiguration) -> Void) -> Self {
         var copy = self
         copy.configuration = configuration

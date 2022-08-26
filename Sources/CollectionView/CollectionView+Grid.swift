@@ -1,8 +1,6 @@
 import Foundation
 import UIKit
 
-// MARK: Grid
-
 public extension NSCollectionLayoutSection {
 
     enum GridLayoutMode {
