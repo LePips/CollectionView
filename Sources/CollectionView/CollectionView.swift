@@ -118,8 +118,8 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
             coordinator.rowsHash = rows.hashValue
         }
     }
-
-    // MARK: internal objects
+    
+    // MARK: Coordinator
 
     public class Coordinator: NSObject, UICollectionViewDelegate {
         fileprivate typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
