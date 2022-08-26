@@ -1,12 +1,5 @@
 import Foundation
-import UIKit
-
-public enum Boundary: CaseIterable {
-    case top
-    case bottom
-    case left
-    case right
-}
+import SwiftUI
 
 struct OptionalSize {
 
@@ -59,4 +52,8 @@ extension UIScrollView {
             height: contentSize.height + adjustedContentInset.bottom + adjustedContentInset.top
         )
     }
+}
+
+public extension EdgeInsets {
+    static let zero: EdgeInsets = .init(top: 0, leading: 0, bottom: 0, trailing: 0)
 }

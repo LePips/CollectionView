@@ -1,5 +1,5 @@
 import Foundation
-import UIKit
+import SwiftUI
 
 public struct CollectionViewProxy {
 
@@ -13,9 +13,8 @@ public struct CollectionViewProxy {
         collectionView.scrollToItem(at: indexPath, at: scrollPosition, animated: animated)
     }
 
-    /// Scrolls to the given boundary
-    public func scrollTo(_ boundary: Boundary, animated: Bool = true) {
-        switch boundary {
+    public func scrollTo(_ edge: Edge, animated: Bool = true) {
+        switch edge {
         case .top:
             let xOffset = collectionView.contentOffset.x
             let yOffset = collectionView.adjustedContentInset.top
@@ -25,11 +24,11 @@ public struct CollectionViewProxy {
             let bottomInset = collectionView.adjustedContentInset.bottom
             let yOffset = collectionView.contentSize.height - collectionView.frame.height + bottomInset
             collectionView.setContentOffset(.init(x: xOffset, y: yOffset), animated: animated)
-        case .left:
+        case .leading:
             let xOffset = collectionView.adjustedContentInset.left
             let yOffset = collectionView.contentOffset.y
             collectionView.setContentOffset(.init(x: xOffset, y: yOffset), animated: animated)
-        case .right:
+        case .trailing:
             let rightInset = collectionView.adjustedContentInset.right
             let xOffset = collectionView.contentSize.width - collectionView.frame.width + rightInset
             let yOffset = collectionView.contentOffset.y

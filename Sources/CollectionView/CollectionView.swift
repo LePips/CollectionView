@@ -23,9 +23,9 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
 
     private var rows: [CollectionSection<Section, Item>]
     private var animateChanges: Bool
-    private var onBoundaryReached: (Boundary) -> Void
-    private var willReachBoundary: (Boundary) -> Void
-    private var willReachBoundaryOffset: CGFloat?
+    private var onEdgeReached: (Edge) -> Void
+    private var willReachEdge: (Edge) -> Void
+    private var willReachEdgeInsets: EdgeInsets
     private var configuration: (CollectionViewConfiguration) -> Void
     private var sectionLayout: (Int, NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection
     private var cell: (IndexPath, Item, CollectionViewProxy) -> Cell
@@ -33,18 +33,18 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
     private init(
         rows: [CollectionSection<Section, Item>],
         animateChanges: Bool,
-        onBoundaryReached: @escaping (Boundary) -> Void,
-        willReachBoundary: @escaping (Boundary) -> Void,
-        willReachBoundaryOffset: CGFloat?,
+        onEdgeReached: @escaping (Edge) -> Void,
+        willReachEdge: @escaping (Edge) -> Void,
+        willReachEdgeInsets: EdgeInsets,
         configuration: @escaping (CollectionViewConfiguration) -> Void,
         sectionLayout: @escaping (Int, NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection,
         @ViewBuilder cell: @escaping (IndexPath, Item, CollectionViewProxy) -> Cell
     ) {
         self.rows = rows
         self.animateChanges = animateChanges
-        self.onBoundaryReached = onBoundaryReached
-        self.willReachBoundary = willReachBoundary
-        self.willReachBoundaryOffset = willReachBoundaryOffset
+        self.onEdgeReached = onEdgeReached
+        self.willReachEdge = willReachEdge
+        self.willReachEdgeInsets = willReachEdgeInsets
         self.configuration = configuration
         self.sectionLayout = sectionLayout
         self.cell = cell
@@ -118,7 +118,7 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
             coordinator.rowsHash = rows.hashValue
         }
     }
-    
+
     // MARK: Coordinator
 
     public class Coordinator: NSObject, UICollectionViewDelegate {
@@ -127,11 +127,10 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
         fileprivate var dataSource: DataSource?
         var sectionLayout: ((Int, NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection)?
         var rowsHash: Int?
-        var parent: CollectionView?
+        var parent: CollectionView!
 
-        private var onBoundaryReachedStore: Set<Boundary> = []
-        private var willReachBoundaryStore: Set<Boundary> = []
-        private var lastScrollViewOffsetBoundary: CGFloat = 0
+        private var onEdgeReachedStore: Set<Edge> = []
+        private var willReachEdgeStore: Set<Edge> = []
 
         public func collectionView(_ collectionView: UICollectionView, canFocusItemAt indexPath: IndexPath) -> Bool {
             false
@@ -141,35 +140,47 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
             let scrollableHorizontally = scrollView.contentSizePlusInsets.width > scrollView.frame.size.width
             let scrollableVertically = scrollView.contentSizePlusInsets.height > scrollView.frame.size.height
 
-            // TODO: implement willReachBoundary
+            for edge in Edge.allCases {
+                var hasReachedEdge: Bool = false
+                var willReachEdge: Bool = false
 
-            for boundary in Boundary.allCases {
-                let hasReachedBoundary: Bool = {
-                    switch boundary {
-                    case .top:
-                        return scrollableVertically && scrollView.contentOffset.y <= -scrollView.adjustedContentInset.top
-                    case .bottom:
-                        let bottomInset = scrollView.adjustedContentInset.bottom
-                        let xOffset = scrollView.contentSize.height - scrollView.frame.height + bottomInset
+                switch edge {
+                case .top:
+                    hasReachedEdge = scrollableVertically && scrollView.contentOffset.y <= -scrollView.adjustedContentInset.top
+                    willReachEdge = scrollableVertically && scrollView.contentOffset.y <= -scrollView.adjustedContentInset.top + parent
+                        .willReachEdgeInsets.top
+                case .bottom:
+                    hasReachedEdge = scrollableVertically && scrollView.contentOffset.y >= scrollView.contentSize.height - scrollView.frame
+                        .height + scrollView.adjustedContentInset.bottom
+                    willReachEdge = scrollableVertically && scrollView.contentOffset.y >= scrollView.contentSize.height - scrollView.frame
+                        .height + scrollView.adjustedContentInset.bottom - parent.willReachEdgeInsets.bottom
+                case .leading:
+                    hasReachedEdge = scrollableHorizontally && scrollView.contentOffset.x <= -scrollView.adjustedContentInset.left
+                    willReachEdge = scrollableHorizontally && scrollView.contentOffset.x <= -scrollView.adjustedContentInset.left + parent
+                        .willReachEdgeInsets.leading
+                case .trailing:
+                    hasReachedEdge = scrollableHorizontally && scrollView.contentOffset.x >= scrollView.contentSize.width - scrollView.frame
+                        .width + scrollView.adjustedContentInset.right
+                    willReachEdge = scrollableHorizontally && scrollView.contentOffset.x >= scrollView.contentSize.width - scrollView.frame
+                        .width + scrollView.adjustedContentInset.right - parent.willReachEdgeInsets.trailing
+                }
 
-                        return scrollableVertically && scrollView.contentOffset.y >= xOffset
-                    case .left:
-                        return scrollableHorizontally && scrollView.contentOffset.x <= -scrollView.adjustedContentInset.left
-                    case .right:
-                        let rightInset = scrollView.adjustedContentInset.right
-                        let xOffset = scrollView.contentSize.width - scrollView.frame.width + rightInset
-
-                        return scrollableHorizontally && scrollView.contentOffset.x >= xOffset
-                    }
-                }()
-
-                if hasReachedBoundary {
-                    if !onBoundaryReachedStore.contains(boundary) {
-                        onBoundaryReachedStore.insert(boundary)
-                        parent?.onBoundaryReached(boundary)
+                if hasReachedEdge {
+                    if !onEdgeReachedStore.contains(edge) {
+                        onEdgeReachedStore.insert(edge)
+                        parent.onEdgeReached(edge)
                     }
                 } else {
-                    onBoundaryReachedStore.remove(boundary)
+                    onEdgeReachedStore.remove(edge)
+                }
+
+                if willReachEdge {
+                    if !willReachEdgeStore.contains(edge) {
+                        willReachEdgeStore.insert(edge)
+                        parent.willReachEdge(edge)
+                    }
+                } else {
+                    willReachEdgeStore.remove(edge)
                 }
             }
         }
@@ -186,9 +197,9 @@ public extension CollectionView {
         self.init(
             rows: rows,
             animateChanges: false,
-            onBoundaryReached: { _ in },
-            willReachBoundary: { _ in },
-            willReachBoundaryOffset: nil,
+            onEdgeReached: { _ in },
+            willReachEdge: { _ in },
+            willReachEdgeInsets: .zero,
             configuration: { _ in },
             sectionLayout: { _, layoutEnvironment in .grid(layoutEnvironment: layoutEnvironment) },
             cell: cell
@@ -220,19 +231,18 @@ public extension CollectionView {
         return copy
     }
 
-    func onBoundaryReached(_ onBoundaryReached: @escaping (Boundary) -> Void) -> Self {
+    func onEdgeReached(_ onEdgeReached: @escaping (Edge) -> Void) -> Self {
         var copy = self
-        copy.onBoundaryReached = onBoundaryReached
+        copy.onEdgeReached = onEdgeReached
         return copy
     }
 
-    // TODO: implement willReachBoundary
-//    func willReachBoundary(offset: CGFloat = 50, _ willReachBoundary: @escaping (Boundary) -> Void) -> Self {
-//        var copy = self
-//        copy.willReachBoundaryOffset = offset
-//        copy.willReachBoundary = willReachBoundary
-//        return copy
-//    }
+    func willReachEdge(insets: EdgeInsets = .zero, _ willReachEdge: @escaping (Edge) -> Void) -> Self {
+        var copy = self
+        copy.willReachEdgeInsets = insets
+        copy.willReachEdge = willReachEdge
+        return copy
+    }
 
     func configuration(_ configuration: @escaping (CollectionViewConfiguration) -> Void) -> Self {
         var copy = self
