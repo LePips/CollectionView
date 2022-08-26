@@ -103,9 +103,9 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
     // MARK: Coordinator
 
     public class Coordinator: NSObject, UICollectionViewDelegate {
-        fileprivate typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
+        typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
 
-        fileprivate var dataSource: DataSource?
+        var dataSource: DataSource?
         var sectionLayout: ((Int, NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection)?
         var rowsHash: Int?
         var parent: CollectionView!
