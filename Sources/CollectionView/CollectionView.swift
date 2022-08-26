@@ -141,7 +141,6 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
             let scrollableHorizontally = scrollView.contentSizePlusInsets.width > scrollView.frame.size.width
             let scrollableVertically = scrollView.contentSizePlusInsets.height > scrollView.frame.size.height
 
-            // TODO: different hasReachedBoundary implementation
             // TODO: implement willReachBoundary
 
             for boundary in Boundary.allCases {
