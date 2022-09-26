@@ -4,7 +4,7 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
 
     @Binding
     private var scrollViewOffset: CGPoint
-    
+
     private var rows: [CollectionSection<Section, Item>]
     private var onEdgeReached: (Edge) -> Void
     private var willReachEdge: (Edge) -> Void
@@ -24,7 +24,7 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
         @ViewBuilder cell: @escaping (IndexPath, Item, CollectionViewProxy) -> Cell
     ) {
         self._scrollViewOffset = scrollViewOffset
-        
+
         self.rows = rows
         self.onEdgeReached = onEdgeReached
         self.willReachEdge = willReachEdge
@@ -122,7 +122,7 @@ public struct CollectionView<Section: Hashable, Item: Hashable, Cell: View>: UIV
 
         public func scrollViewDidScroll(_ scrollView: UIScrollView) {
             guard scrollView.frame.width > 0, scrollView.frame.height > 0 else { return }
-            
+
             parent.scrollViewOffset = scrollView.contentOffset
 
             let scrollableHorizontally = scrollView.contentSizePlusInsets.width > scrollView.frame.size.width
@@ -190,7 +190,7 @@ public extension CollectionView {
         @ViewBuilder cell: @escaping (IndexPath, Item, CollectionViewProxy) -> Cell
     ) {
         self.init(
-            scrollViewOffset: Binding(get: { .zero }, set: { _ in  }),
+            scrollViewOffset: Binding(get: { .zero }, set: { _ in }),
             rows: rows,
             onEdgeReached: { _ in },
             willReachEdge: { _ in },
@@ -215,33 +215,23 @@ public extension CollectionView where Section == Int {
 
 public extension CollectionView {
     func layout(_ sectionLayout: @escaping (Int, NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection) -> Self {
-        var copy = self
-        copy.sectionLayout = sectionLayout
-        return copy
+        copy(modifying: \.sectionLayout, with: sectionLayout)
     }
 
     func onEdgeReached(_ onEdgeReached: @escaping (Edge) -> Void) -> Self {
-        var copy = self
-        copy.onEdgeReached = onEdgeReached
-        return copy
+        copy(modifying: \.onEdgeReached, with: onEdgeReached)
     }
 
     func willReachEdge(insets: EdgeInsets = .zero, _ willReachEdge: @escaping (Edge) -> Void) -> Self {
-        var copy = self
-        copy.willReachEdgeInsets = insets
-        copy.willReachEdge = willReachEdge
-        return copy
+        copy(modifying: \.willReachEdgeInsets, with: insets)
+            .copy(modifying: \.willReachEdge, with: willReachEdge)
     }
 
     func configure(_ configure: @escaping (CollectionViewConfiguration) -> Void) -> Self {
-        var copy = self
-        copy.configure = configure
-        return copy
+        copy(modifying: \.configure, with: configure)
     }
-    
+
     func scrollViewOffset(_ scrollViewOffset: Binding<CGPoint>) -> Self {
-        var copy = self
-        copy._scrollViewOffset = scrollViewOffset
-        return copy
+        copy(modifying: \._scrollViewOffset, with: scrollViewOffset)
     }
 }

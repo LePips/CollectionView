@@ -57,3 +57,11 @@ extension UIScrollView {
 public extension EdgeInsets {
     static let zero: EdgeInsets = .init(top: 0, leading: 0, bottom: 0, trailing: 0)
 }
+
+extension View {
+    func copy<Value>(modifying keyPath: WritableKeyPath<Self, Value>, with newValue: Value) -> Self {
+        var copy = self
+        copy[keyPath: keyPath] = newValue
+        return copy
+    }
+}
